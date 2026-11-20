@@ -1,0 +1,232 @@
+
+# 1. DEPTH FIRST SEARCH (DFS)
+
+def dfs(graph, start, visited):
+    if start not in visited:
+        print(start, end=" ")
+        visited.add(start)
+        for neighbour in graph[start]:
+            dfs(graph, neighbour, visited)
+
+graph = {'A':['B','C'], 'B':['D','E'], 'C':['F'],
+         'D':[], 'E':[], 'F':[]}
+
+print("DFS:")
+dfs(graph, 'A', set())
+
+
+# 2. BREADTH FIRST SEARCH (BFS)
+
+from collections import deque
+
+def bfs(graph, start):
+    visited = {start}
+    queue = deque([start])
+
+    while queue:
+        node = queue.popleft()
+        print(node, end=" ")
+        for neighbour in graph[node]:
+            if neighbour not in visited:
+                visited.add(neighbour)
+                queue.append(neighbour)
+
+print("\nBFS:")
+bfs(graph, 'A')
+
+
+# 3. UNIFORM COST SEARCH (UCS)
+
+import heapq
+
+def ucs(graph, start, goal):
+    queue = [(0, start)]
+    visited = set()
+
+    while queue:
+        cost, node = heapq.heappop(queue)
+
+        if node == goal:
+            return cost
+
+        if node not in visited:
+            visited.add(node)
+            for neighbour, edge_cost in graph[node]:
+                heapq.heappush(queue,
+                               (cost + edge_cost, neighbour))
+    return None
+
+graph = {'A':[('B',2),('C',5)], 'B':[('D',4),('E',1)],
+         'C':[('E',2)], 'D':[('F',3)], 'E':[('F',1)], 'F':[]}
+
+print("UCS:", ucs(graph, 'A', 'F'))
+
+
+# 4. A* SEARCH
+
+def a_star(graph, start, goal, heuristic):
+    queue = [(heuristic[start], 0, start)]
+    visited = set()
+
+    while queue:
+        f_cost, cost, node = heapq.heappop(queue)
+
+        if node == goal:
+            return cost
+
+        if node not in visited:
+            visited.add(node)
+            for neighbour, edge_cost in graph[node]:
+                new_cost = cost + edge_cost
+                f = new_cost + heuristic[neighbour]
+                heapq.heappush(queue, (f, new_cost, neighbour))
+
+    return None
+
+graph = {'A':[('B',1),('C',4)], 'B':[('D',2)],
+         'C':[('D',1)], 'D':[]}
+heuristic = {'A':3, 'B':2, 'C':1, 'D':0}
+
+print("A*:", a_star(graph, 'A', 'D', heuristic))
+
+
+# 5. GREEDY BEST FIRST SEARCH
+
+def greedy(graph, start, goal, heuristic):
+    queue = [(heuristic[start], start)]
+    visited = set()
+
+    while queue:
+        h, node = heapq.heappop(queue)
+
+        if node == goal:
+            return node
+
+        if node not in visited:
+            visited.add(node)
+            for neighbour in graph[node]:
+                heapq.heappush(queue,
+                               (heuristic[neighbour], neighbour))
+
+    return None
+
+graph = {'A':['B','C'], 'B':['D'], 'C':['D'], 'D':[]}
+heuristic = {'A':3, 'B':2, 'C':1, 'D':0}
+
+print("Greedy:", greedy(graph, 'A', 'D', heuristic))
+
+
+# 6. MAZE SOLVING USING A*
+
+def solve_maze(maze, start, goal):
+    queue = [(0, start, [start])]
+    visited = set()
+
+    while queue:
+        cost, position, path = heapq.heappop(queue)
+
+        if position == goal:
+            return path
+
+        if position not in visited:
+            visited.add(position)
+            row, col = position
+
+            for dr, dc in [(0,1),(0,-1),(1,0),(-1,0)]:
+                r, c = row + dr, col + dc
+
+                if 0 <= r < len(maze) and 0 <= c < len(maze[0]) and maze[r][c] == 0:
+                    next_pos = (r, c)
+                    h = abs(r-goal[0]) + abs(c-goal[1])
+                    heapq.heappush(queue,
+                        (cost+1+h, next_pos, path+[next_pos]))
+
+    return None
+
+maze = [[0,0,0],[1,1,0],[0,0,0]]
+print("Maze:", solve_maze(maze, (0,0), (2,2)))
+
+
+# 7. MINIMAX WITH ALPHA-BETA PRUNING
+
+def minimax(board, depth, alpha, beta, maximizing):
+    if depth == 0:
+        return 0
+
+    if maximizing:
+        best = -999
+        for move in board:
+            value = minimax(board, depth-1, alpha, beta, False)
+            best = max(best, value)
+            alpha = max(alpha, best)
+            if beta <= alpha:
+                break
+        return best
+
+    else:
+        best = 999
+        for move in board:
+            value = minimax(board, depth-1, alpha, beta, True)
+            best = min(best, value)
+            beta = min(beta, best)
+            if beta <= alpha:
+                break
+        return best
+
+print("Minimax:", minimax([1,2], 3, -999, 999, True))
+
+
+# 8. HILL CLIMBING WITH RANDOM RESTART
+
+import random
+
+def function(x):
+    return -(x-5)**2 + 25
+
+def hill_climbing():
+    best_value = -999
+
+    for restart in range(10):
+        x = random.randint(0,10)
+
+        while x < 10 and function(x+1) > function(x):
+            x += 1
+
+        best_value = max(best_value, function(x))
+
+    return best_value
+
+print("Hill Climbing:", hill_climbing())
+
+
+# 9. 8-PUZZLE STATE
+
+def display_puzzle(state):
+    for i in range(0, 9, 3):
+        print(state[i:i+3])
+
+puzzle = [1,2,3,4,0,6,7,5,8]
+print("Puzzle State:")
+display_puzzle(puzzle)
+
+
+# 10. 8-PUZZLE POSSIBLE MOVES
+
+def puzzle_moves(state):
+    zero = state.index(0)
+    row, col = divmod(zero, 3)
+
+    directions = [(-1,0,'Up'), (1,0,'Down'),
+                  (0,-1,'Left'), (0,1,'Right')]
+
+    for dr, dc, name in directions:
+        new_row, new_col = row+dr, col+dc
+
+        if 0 <= new_row < 3 and 0 <= new_col < 3:
+            new_state = state.copy()
+            new_pos = new_row*3 + new_col
+            new_state[zero], new_state[new_pos] = new_state[new_pos], new_state[zero]
+            print(name, new_state)
+
+print("Possible Moves:")
+puzzle_moves(puzzle)
